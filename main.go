@@ -1,7 +1,6 @@
 package scraper
 
 import (
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -12,20 +11,21 @@ import (
 )
 
 func init() {
-    functions.HTTP("Handler", Handler)
+	functions.HTTP("Handler", Handler)
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 
-	var request struct {
-		ApiKey       string `json:"apiKey"`
-		CarrierCodes string `json:"carrierCodes"`
-		StartDate    string `json:"StartDate"`
-		EndDate      string `json:"endDate"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-
+	var request = struct {
+		ApiKey       string
+		CarrierCodes string
+		StartDate    string
+		EndDate      string
+	}{
+		ApiKey:       r.URL.Query().Get("apiKey"),
+		CarrierCodes: r.URL.Query().Get("carrierCodes"),
+		StartDate:    r.URL.Query().Get("startDate"),
+		EndDate:      r.URL.Query().Get("endDate"),
 	}
 
 	client := &MaerskClient{
