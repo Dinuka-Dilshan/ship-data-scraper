@@ -1,4 +1,4 @@
-module github.com/Dinuka-Dilshan/ship-data-scraper
+module ship-node
 
 go 1.25.2
 
