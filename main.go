@@ -41,6 +41,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	vesells, err := client.GetVessels()
 	if err != nil {
 		slog.Error(err.Error())
+		http.Error(w, "Failed to fetch vessel list", http.StatusInternalServerError)
 		return
 	}
 

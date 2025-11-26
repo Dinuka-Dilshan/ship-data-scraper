@@ -24,7 +24,11 @@ func createCsv(w io.Writer, data [][]string) error {
 
 func createMultipleCsv(w io.Writer, dataMap map[string][][]string) {
 	zipWriter := zip.NewWriter(w)
-	defer zipWriter.Close()
+	defer func() {
+		if err := zipWriter.Close(); err != nil {
+			slog.Error("Failed to close zip writer", "error", err)
+		}
+	}()
 
 	for fileName, data := range dataMap {
 		file, err := zipWriter.Create(fileName)
