@@ -7,7 +7,13 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
 )
+
+func init() {
+    functions.HTTP("Handler", Handler)
+}
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 
