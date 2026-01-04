@@ -16,13 +16,18 @@ func init() {
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 
+	apiKey := r.URL.Query().Get("apiKey")
+	if apiKey == "" {
+		apiKey = "uXe7bxTHLY0yY0e8jnS6kotShkLuAAqG"
+	}
+
 	var request = struct {
 		ApiKey       string
 		CarrierCodes string
 		StartDate    string
 		EndDate      string
 	}{
-		ApiKey:       r.URL.Query().Get("apiKey"),
+		ApiKey:       apiKey,
 		CarrierCodes: r.URL.Query().Get("carrierCodes"),
 		StartDate:    r.URL.Query().Get("startDate"),
 		EndDate:      r.URL.Query().Get("endDate"),
