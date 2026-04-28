@@ -2,6 +2,7 @@ package scraper
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 )
 
@@ -94,6 +95,7 @@ func (m *MaerskClient) GetVessels() (*VesselsResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	slog.Info("Fetched vessels", "count", len(vesselsRes.Vessels))
 	return &vesselsRes, nil
 }
 
@@ -102,7 +104,9 @@ func (m *MaerskClient) GetScedule(vessel Vessel) (*VesselSchedulesResponse, erro
 	var scheduleRes VesselSchedulesResponse
 	err := m.httpClient.Get(url, &scheduleRes)
 	if err != nil {
+		slog.Error("Error fetching schedule for vessel", "vesselMaerskCode", vessel.VesselMaerskCode, "error", err.Error())
 		return nil, err
 	}
+	slog.Info("Fetched schedule for vessel", "vesselMaerskCode", vessel.VesselMaerskCode, "count", len(scheduleRes.VesselSchedules))
 	return &scheduleRes, err
 }

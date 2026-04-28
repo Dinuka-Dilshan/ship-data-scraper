@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
+	"golang.org/x/sync/semaphore"
 )
 
 func init() {
@@ -16,18 +17,13 @@ func init() {
 
 func Handler(w http.ResponseWriter, r *http.Request) {
 
-	apiKey := r.URL.Query().Get("apiKey")
-	if apiKey == "" {
-		apiKey = "uXe7bxTHLY0yY0e8jnS6kotShkLuAAqG"
-	}
-
 	var request = struct {
 		ApiKey       string
 		CarrierCodes string
 		StartDate    string
 		EndDate      string
 	}{
-		ApiKey:       apiKey,
+		ApiKey:       "uXe7bxTHLY0yY0e8jnS6kotShkLuAAqG",
 		CarrierCodes: r.URL.Query().Get("carrierCodes"),
 		StartDate:    r.URL.Query().Get("startDate"),
 		EndDate:      r.URL.Query().Get("endDate"),
@@ -61,26 +57,31 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dataStream := make(chan *StreamData, len(vesells.Vessels))
+	semaphore := semaphore.NewWeighted(5)
 	var wg sync.WaitGroup
 
-	for _, vessel := range vesells.Vessels {
-		wg.Go(func() {
-			schedule, err := client.GetScedule(vessel)
-
-			if err != nil {
-				slog.Error(err.Error())
-				dataStream <- nil
-				return
-			}
-
-			dataStream <- &StreamData{
-				csv:   schedule.toCsvFormat(vessel),
-				nodes: GetNodeList(schedule.VesselSchedules),
-			}
-		})
-	}
-
 	go func() {
+		for _, vessel := range vesells.Vessels {
+			if err := semaphore.Acquire(r.Context(), 1); err != nil {
+				slog.Error(err.Error())
+				continue
+			}
+			wg.Go(func() {
+				defer semaphore.Release(1)
+				schedule, err := client.GetScedule(vessel)
+				if err != nil {
+					slog.Error(err.Error())
+					dataStream <- nil
+					return
+				}
+
+				dataStream <- &StreamData{
+					csv:   schedule.toCsvFormat(vessel),
+					nodes: GetNodeList(schedule.VesselSchedules),
+				}
+			})
+		}
+
 		wg.Wait()
 		close(dataStream)
 	}()
